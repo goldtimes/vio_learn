@@ -1,0 +1,26 @@
+{
+    "workbench.colorCustomizations": {
+        "activityBar.activeBackground": "#c4a77c",
+        "activityBar.background": "#c4a77c",
+        "activityBar.foreground": "#15202b",
+        "activityBar.inactiveForeground": "#15202b99",
+        "activityBarBadge.background": "#e9f5f0",
+        "activityBarBadge.foreground": "#15202b",
+        "commandCenter.border": "#15202b99",
+        "sash.hoverBorder": "#c4a77c",
+        "statusBar.background": "#b48f59",
+        "statusBar.foreground": "#15202b",
+        "statusBarItem.hoverBackground": "#967544",
+        "statusBarItem.remoteBackground": "#b48f59",
+        "statusBarItem.remoteForeground": "#15202b",
+        "titleBar.activeBackground": "#b48f59",
+        "titleBar.activeForeground": "#15202b",
+        "titleBar.inactiveBackground": "#b48f5999",
+        "titleBar.inactiveForeground": "#15202b99"
+    },
+    "peacock.color": "#b48f59",
+    "clangd.path": "clangd",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/vio_data_sim/build",
+    ]
+}
