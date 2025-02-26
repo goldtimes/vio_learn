@@ -3,6 +3,7 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <cmath>
+#include <fstream>
 #include <vector>
 #include <cmath>
 #include <random>
@@ -67,6 +68,8 @@ class Imu{
         MotionData get_imudata(double t);
 
         void addNoise(MotionData& data);
+
+        void integImu(const std::vector<MotionData>& input_data,  std::string out_file, bool use_mid_integ = false);
 
     public:
         Params params_;
@@ -156,6 +159,70 @@ void Imu::addNoise(MotionData& data){
     data.imu_acc_bias = acc_bias_;
 
 }
+
+void Imu::integImu(const std::vector<MotionData>& input_data,  std::string out_file, bool use_mid_integ){
+    std::ofstream save_point;
+    save_point.open(out_file);
+
+    double dt = params_.imu_timestamped;
+    Eigen::Vector3d Pwb = init_twb_;              // position :    from  imu measurements
+    Eigen::Quaterniond Qwb(init_Rwb_);            // quaterniond:  from imu measurements
+    Eigen::Vector3d Vw = init_velocity_;          // velocity  :   from imu measurements
+    Eigen::Vector3d gw(0,0,-9.81);                // ENU frame
+    Eigen::Vector3d temp_a;
+    Eigen::Vector3d theta;
+    for(int i = 1; i < input_data.size(); ++i){
+        MotionData imu_data = input_data[i];
+        //delta_q = [1 , 1/2 * thetax , 1/2 * theta_y, 1/2 * theta_z]
+        Eigen::Quaterniond dq;
+        Eigen::Vector3d half_dtheta;
+        if (!use_mid_integ){
+            half_dtheta = imu_data.imu_gyro * dt / 2.0;
+
+        }else{
+            half_dtheta = (input_data[i - 1].imu_gyro + input_data[i].imu_gyro) / 2 * dt / 2.0;
+        }   
+
+        dq.w() = 1;
+        dq.x() = half_dtheta[0];
+        dq.y() = half_dtheta[1];
+        dq.z() = half_dtheta[2];
+        dq.normalize();
+        // 欧拉积分
+        if (!use_mid_integ){
+            Eigen::Vector3d acc_w = Qwb * imu_data.imu_acc + gw;
+            Qwb = Qwb * dq;
+            Pwb = Pwb + Vw * dt + 0.5 * acc_w * dt * dt;
+            Vw = Vw + acc_w * dt;
+        }
+        // 中值积分
+        else {
+            Eigen::Vector3d acc_w = (Qwb * input_data[i-1].imu_acc + gw + Qwb * input_data[i].imu_acc + gw) / 2;
+            Qwb = Qwb * dq;
+            Pwb = Pwb + Vw * dt + 0.5 * acc_w * dt * dt;
+            Vw = Vw + acc_w * dt;
+        }
+
+        //　按着imu postion, imu quaternion , cam postion, cam quaternion 的格式存储，由于没有cam，所以imu存了两次
+        save_point<<imu_data.timestamped <<" "
+                   <<Qwb.w()<<" "
+                   <<Qwb.x()<<" "
+                   <<Qwb.y()<<" "
+                   <<Qwb.z()<<" "
+                   <<Pwb(0)<<" "
+                   <<Pwb(1)<<" "
+                   <<Pwb(2)<<" "
+                   <<Qwb.w()<<" "
+                   <<Qwb.x()<<" "
+                   <<Qwb.y()<<" "
+                   <<Qwb.z()<<" "
+                   <<Pwb(0)<<" "
+                   <<Pwb(1)<<" "
+                   <<Pwb(2)<<" "
+                   <<std::endl;
+    }
+}
+
 
 
 
