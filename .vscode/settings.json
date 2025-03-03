@@ -18,9 +18,11 @@
         "titleBar.inactiveBackground": "#b48f5999",
         "titleBar.inactiveForeground": "#15202b99"
     },
+    "editor.formatOnSave": true,
+    "clang-format.executable": "/usr/bin/clang-format-7",
     "peacock.color": "#b48f59",
     "clangd.path": "clangd",
     "clangd.arguments": [
-        "--compile-commands-dir=${workspaceFolder}/vio_data_sim/build",
+        "--compile-commands-dir=/home/kilox/vslam_ws/src/vio_learn/build",
     ]
 }
