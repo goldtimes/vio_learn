@@ -1,5 +1,4 @@
 #include "edge.hh"
-#include <sys/types.h>
 #include <iostream>
 #include "vertex.hh"
 

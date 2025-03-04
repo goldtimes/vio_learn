@@ -2,8 +2,8 @@
 
 #include <Eigen/Eigen>
 #include <Eigen/Geometry>
-#include <vector>
 #include <map>
+#include <vector>
 
 // double matricies
 typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> MatXX;
@@ -17,7 +17,7 @@ typedef Eigen::Matrix<double, 4, 3> Mat43;
 typedef Eigen::Matrix<double, 4, 2> Mat42;
 typedef Eigen::Matrix<double, 3, 3> Mat33;
 typedef Eigen::Matrix<double, 2, 2> Mat22;
-typedef Eigen::Matrix<double, 2, 3> Mat23; 
+typedef Eigen::Matrix<double, 2, 3> Mat23;
 typedef Eigen::Matrix<double, 7, 7> Mat77;
 typedef Eigen::Matrix<double, 4, 9> Mat49;
 typedef Eigen::Matrix<double, 8, 9> Mat89;
