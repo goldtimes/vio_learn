@@ -1,5 +1,15 @@
+/*
+ * @Author: lihang 1019825699@qq.com
+ * @Date: 2025-03-04 23:12:57
+ * @LastEditors: lihang 1019825699@qq.com
+ * @LastEditTime: 2025-03-05 00:16:40
+ * @FilePath: /vslam_ws/src/vio_learn/src/vio_slam/src/backend/problem.hh
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置:
+ * https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 #pragma once
 
+#include <fstream>
 #include <map>
 #include <memory>
 #include <unordered_map>
@@ -39,6 +49,27 @@ class Problem {
     HashEdge edges_;
     // 顶点和边的关系
     HashVertexIdToEdge vertexsIdToEdge;
-    Eigen::Matrix3d mat;
+
+    std::ofstream outfile_;
+    // 记录迭代的次数
+    int n_iter_;
+
+    // 位姿的维度
+    ulong ordering_pose_;
+    // landmark的维度
+    ulong ordering_landmark_;
+    // 总的维度
+    ulong ordering_total_;
+
+    // Hessian矩阵
+    MatXX Hessian_;
+    VecX b_;
+    VecX delta_x;
+
+   private:
+    //    统计优化变量的维度
+    void SetOrdering();
+    // J^T * information * J
+    void MakeHessian();
 };
 }  // namespace vslam::backend

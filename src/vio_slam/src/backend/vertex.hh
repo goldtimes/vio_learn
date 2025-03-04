@@ -1,3 +1,12 @@
+/*
+ * @Author: lihang 1019825699@qq.com
+ * @Date: 2025-03-04 23:12:57
+ * @LastEditors: lihang 1019825699@qq.com
+ * @LastEditTime: 2025-03-05 00:38:25
+ * @FilePath: /vio_learn/src/vio_slam/src/backend/vertex.hh
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置:
+ * https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 #pragma once
 
 #include "eigen_types.hh"
@@ -52,6 +61,14 @@ class Vertex {
     /// 返回顶点的名称，在子类中实现
     virtual std::string TypeInfo() const = 0;
 
+    int OrderingId() const {
+        return ordering_id_;
+    }
+
+    void SetOrderingId(unsigned long id) {
+        ordering_id_ = id;
+    };
+
     /// 固定该点的估计值
     void SetFixed(bool fixed = true) {
         fixed_ = fixed;
@@ -69,6 +86,9 @@ class Vertex {
     int local_dimension_;
     // 顶点的id
     unsigned long id_ = 0;
+
+    unsigned long ordering_id_;
+
     // 顶点是否需要被优化
     bool fixed_ = false;
 };
