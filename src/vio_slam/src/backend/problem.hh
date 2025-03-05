@@ -66,10 +66,28 @@ class Problem {
     VecX b_;
     VecX delta_x;
 
+    MatXX Hessian_tmp_;
+
+    // 先验
+    VecX err_prior_;
+
+    int ni_;
+    double currentLambda_;
+    double stopThresholdLM_;
+    double currentChi_;
+
    private:
     //    统计优化变量的维度
     void SetOrdering();
     // J^T * information * J
     void MakeHessian();
+
+    void ComputeLambdaInitLM();
+    void AddLambdatoHessianLM();
+
+    void RemoveLambdaHessianLM();
+    void UpdateStates();
+    bool IsGoodStepInLM();
+    void RollbackStates();
 };
 }  // namespace vslam::backend
