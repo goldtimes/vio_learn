@@ -37,5 +37,6 @@ bool Edge::CheckValid() {
             }
         }
     }
+    return true;
 }
 }  // namespace vslam::backend

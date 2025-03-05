@@ -12,3 +12,6 @@ add_library(${PROJECT_NAME}_backend
         src/backend/edge.cc
         src/backend/problem.cc
 )
+
+add_executable(curve_fitting src/curve_fitting/curve_fitting.cc)
+target_link_libraries(curve_fitting ${PROJECT_NAME}_backend)

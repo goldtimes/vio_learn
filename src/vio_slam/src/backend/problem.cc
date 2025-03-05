@@ -51,9 +51,11 @@ void Problem::SetOrdering() {
     ordering_pose_ = 0;
     ordering_landmark_ = 0;
     ordering_total_ = 0;
+    // std::cout << "verticies_ size:" << verticies_.size() << std::endl;
 
     for (const auto vertex : verticies_) {
         ordering_total_ += vertex.second->LocalDimension();
+        // std::cout << "ordering_total_ :" << ordering_total_ << std::endl;
     }
 }
 
@@ -61,6 +63,8 @@ void Problem::MakeHessian() {
     auto start = std::chrono::system_clock::now();
     ulong size = ordering_total_;
     MatXX H(MatXX::Zero(size, size));
+    // std::cout << "hessian rows:" << H.rows() << ", cols:" << H.cols() << std::endl;
+
     VecX b(VecX::Zero(size, 1));
 
     // 遍历每条边，计算边的残差和雅可比矩阵
@@ -74,38 +78,39 @@ void Problem::MakeHessian() {
         auto vertices = edge.second->Verticies();
         // 遍历顶点
         for (size_t i = 0; i < vertices.size(); ++i) {
-            auto vertex = vertices[i];
+            auto vertex_i = vertices[i];
             // 顶点被固定了
-            if (vertex->IsFixed()) {
+            if (vertex_i->IsFixed()) {
                 // 雅可比矩阵为0
                 continue;
             }
             // 拿到当前的jacobian
-            auto jacobian = jacobians[i];
+            auto jacobian_i = jacobians[i];
             // 放在H的起始位置
-            ulong index_i = vertex->OrderingId();
+            ulong index_i = vertex_i->OrderingId();
             // 维度
-            ulong dim_i = vertex->LocalDimension();
+            ulong dim_i = vertex_i->LocalDimension();
 
-            MatXX JtW = jacobian.transpose() * edge.second->Information();
+            MatXX JtW = jacobian_i.transpose() * edge.second->Information();
             /**
                  a b
                a
                b
             */
-            for (int j = i; j < vertices.size(); ++j) {
-                auto vertex = vertices[j];
+            for (size_t j = i; j < vertices.size(); ++j) {
+                auto vertex_j = vertices[j];
                 // 顶点被固定了
-                if (vertex->IsFixed()) {
+                if (vertex_j->IsFixed()) {
                     // 雅可比矩阵为0
                     continue;
                 }
                 // 拿到当前的jacobian
-                auto jacobian = jacobians[j];
-                ulong index_j = vertex->OrderingId();
-                ulong dim_j = vertex->LocalDimension();
+                auto jacobian_j = jacobians[j];
+                ulong index_j = vertex_j->OrderingId();
+                ulong dim_j = vertex_j->LocalDimension();
 
-                MatXX hessian = JtW * jacobian;
+                MatXX hessian = JtW * jacobian_j;
+                // std::cout << "hessian rows:" << hessian.rows() << ", cols:" << hessian.cols() << std::endl;
                 // 累加起来
                 H.block(index_i, index_j, dim_i, dim_j).noalias() += hessian;
                 if (j != i) {

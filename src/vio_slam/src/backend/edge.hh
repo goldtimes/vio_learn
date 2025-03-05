@@ -23,8 +23,7 @@ class Edge {
      * @param num_verticies 顶点数量
      * @param verticies_types 顶点类型名称，可以不给，不给的话check中不会检查
      */
-    explicit Edge(int residual_dimension, int num_verticies,
-                  const std::vector<std::string> &verticies_types = std::vector<std::string>());
+    Edge(int residual_dimension, int num_verticies, const std::vector<std::string> &verticies_types);
 
     virtual ~Edge();
 
