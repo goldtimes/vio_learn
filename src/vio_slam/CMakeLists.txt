@@ -15,3 +15,6 @@ add_library(${PROJECT_NAME}_backend
 
 add_executable(curve_fitting src/curve_fitting/curve_fitting.cc)
 target_link_libraries(curve_fitting ${PROJECT_NAME}_backend)
+
+add_executable(nullspace_test src/nullspace/hessian_nullspace_test.cc)
+target_link_libraries(nullspace_test ${PROJECT_NAME}_backend)
