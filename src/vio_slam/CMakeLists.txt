@@ -16,6 +16,7 @@ add_library(${PROJECT_NAME}_backend
         src/backend/edge.cc
         src/backend/edge_reprojection.cc
         src/backend/problem.cc
+        src/backend/problem_schur.cc
 )
 
 add_executable(curve_fitting src/curve_fitting/curve_fitting.cc)

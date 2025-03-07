@@ -1,7 +1,7 @@
 #include <iostream>
 #include <random>
 #include "edge_reprojection.hh"
-#include "problem.hh"
+#include "problem_schur.hh"
 #include "vertex_inverse_depth.hh"
 #include "vertex_pose.hh"
 
@@ -58,8 +58,8 @@ int main(int argc, char** argv) {
     Eigen::Quaterniond qic(1, 0, 0, 0);
     Eigen::Vector3d tic(0, 0, 0);
 
-    vslam::backend::Problem problem(vslam::backend::Problem::ProblemType::SLAM_PROBLEM);
-    std::vector<std::shared_ptr<VertexPose>> vertices_;
+    vslam::backend::ProblemSchur problem(vslam::backend::ProblemSchur::ProblemType::SLAM_PROBLEM);
+    std::vector<std::shared_ptr<VertexPose>> pose_vertices_;
     // 构建顶点
     for (int i = 0; i < cameraPoses.size(); ++i) {
         std::shared_ptr<VertexPose> camera_pose(new VertexPose());
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
             cameraPoses[i].Qwc.w();
         camera_pose->SetParameters(camera_params);
         problem.AddVertex(camera_pose);
-        vertices_.push_back(camera_pose);
+        pose_vertices_.push_back(camera_pose);
     }
     // 逆深度顶点
     std::default_random_engine generator;
@@ -90,6 +90,7 @@ int main(int argc, char** argv) {
         VecX inv_d(1);
         inv_d << inverse_depth;
         inverse_vertex->SetParameters(inv_d);
+        problem.AddVertex(inverse_vertex);
         allPoints.push_back(inverse_vertex);
         // 构建边
         for (int j = 1; j < cameraPoses.size(); ++j) {
@@ -101,8 +102,8 @@ int main(int argc, char** argv) {
 
             std::vector<std::shared_ptr<Vertex>> edge_vertices;
             edge_vertices.push_back(inverse_vertex);
-            edge_vertices.push_back(vertices_[0]);
-            edge_vertices.push_back(vertices_[j]);
+            edge_vertices.push_back(pose_vertices_[0]);
+            edge_vertices.push_back(pose_vertices_[j]);
 
             edge_rep->SetVertex(edge_vertices);
             problem.AddEdge(edge_rep);
@@ -117,8 +118,8 @@ int main(int argc, char** argv) {
                   << " ,opt " << allPoints[k]->Parameters() << std::endl;
     }
     std::cout << "------------ pose translation ----------------" << std::endl;
-    for (int i = 0; i < vertices_.size(); ++i) {
-        std::cout << "translation after opt: " << i << " :" << vertices_[i]->Parameters().head(3).transpose()
+    for (int i = 0; i < pose_vertices_.size(); ++i) {
+        std::cout << "translation after opt: " << i << " :" << pose_vertices_[i]->Parameters().head(3).transpose()
                   << " || gt: " << cameraPoses[i].twc.transpose() << std::endl;
     }
     /// 优化完成后，第一帧相机的 pose 平移（x,y,z）不再是原点 0,0,0. 说明向零空间发生了漂移。
