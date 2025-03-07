@@ -8,7 +8,7 @@
  * https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 #include "edge_reprojection.hh"
-#include "sophus/se3.h"
+#include "se3.hpp"
 #include "vertex_inverse_depth.hh"
 #include "vertex_point_xyz.hh"
 
@@ -74,14 +74,14 @@ void EdgeReprojection::ComputeJacobians() {
     Eigen::Matrix<double, 2, 6> jacobian_pose_i;
     Eigen::Matrix<double, 3, 6> jaco_i;
     jaco_i.leftCols<3>() = ric.transpose() * Rj.transpose();
-    jaco_i.rightCols<3>() = ric.transpose() * Rj.transpose() * Ri * -Sophus::SO3::hat(pt_in_imu_i);
+    jaco_i.rightCols<3>() = ric.transpose() * Rj.transpose() * Ri * -Sophus::SO3d::hat(pt_in_imu_i);
     jacobian_pose_i.leftCols<6>() = reduce * jaco_i;
     // fcj对i时刻姿态的雅可比矩阵
 
     Eigen::Matrix<double, 2, 6> jacobian_pose_j;
     Eigen::Matrix<double, 3, 6> jaco_j;
     jaco_j.leftCols<3>() = ric.transpose() * -Rj.transpose();
-    jaco_j.rightCols<3>() = ric.transpose() * Sophus::SO3::hat(pt_in_imu_j);
+    jaco_j.rightCols<3>() = ric.transpose() * Sophus::SO3d::hat(pt_in_imu_j);
     jacobian_pose_j.leftCols<6>() = reduce * jaco_j;
     // fcj对逆深度的雅可比矩阵
     Eigen::Vector2d jacobian_feature;
@@ -163,13 +163,13 @@ void EdgeReprojectionPoseOnly::ComputeResidual() {
     // 将landmark投影到像素平面
     auto pose_vertex = verticies_[0];
     VecX pose_vec = pose_vertex->Parameters();
-    Sophus::SE3 pose(Eigen::Quaterniond(pose_vec[6], pose_vec[3], pose_vec[4], pose_vec[5]),
-                     Eigen::Vector3d(pose_vec[0], pose_vec[1], pose_vec[2]));
+    Sophus::SE3d pose(Eigen::Quaterniond(pose_vec[6], pose_vec[3], pose_vec[4], pose_vec[5]),
+                      Eigen::Vector3d(pose_vec[0], pose_vec[1], pose_vec[2]));
     Vec3 pc = pose.inverse() * landmark_world_;  // 相机坐标系
     // 归一化
     pc = pc / pc[2];
     // 乘上内参系数
-    Vec2 pro_pixel = (K_ * pc);
+    Vec2 pro_pixel = (K_ * pc).head<2>();
     // 和观测像素做残差
     residual_ = pro_pixel - observation_;
 }
