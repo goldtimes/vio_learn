@@ -27,3 +27,6 @@ target_link_libraries(nullspace_test ${PROJECT_NAME}_backend)
 
 add_executable(monoBA src/ba_optimization/MonoBA.cc)
 target_link_libraries(monoBA ${PROJECT_NAME}_backend)
+
+add_executable(triangulation src/triangulation/triangulation.cc)
+target_link_libraries(triangulation ${PROJECT_NAME}_backend)
