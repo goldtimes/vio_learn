@@ -2,7 +2,7 @@
  * @Author: lihang 1019825699@qq.com
  * @Date: 2025-03-04 23:12:57
  * @LastEditors: lihang 1019825699@qq.com
- * @LastEditTime: 2025-03-08 10:10:06
+ * @LastEditTime: 2025-03-08 12:26:35
  * @FilePath: /vio_learn/src/vio_slam/src/backend/problem.cc
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置:
  * https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
@@ -474,6 +474,87 @@ bool ProblemSchur::Solve(int iterations) {
     std::chrono::duration<double> elapsed_seconds = t_solve - solver_start;
     std::cout << "problem solve cost: " << elapsed_seconds.count() << " ms" << std::endl;
     return true;
+}
+
+void ProblemSchur::TestMarginalize() {
+    // 我们这里定义了3x3的信息矩阵，然后marg掉中间的变量
+    /** 先调整矩阵然后用舒尔补的方式消除第二个变量相关的信息
+        1.           ->       2       ->  3
+        a11 a12 a13       a11 a12 a13    a11 a13 a12
+        a21 a22 a23   ->  a31 a32 a33 -> a31 a33 a32
+        a31 a32 a33       a21 a22 a23    a21 a23 a22
+
+        a11 a12 a13 a14     a11 a12 a13 a14     a11 a13 a14 a12
+        a21 a22 a23 a24     a31 a32 a33 a34     a31 a33 a34 a32
+        a31 a32 a33 a34  -> a41 a42 a43 a44  -> a41 a43 a44 a42
+        a41 a42 a43 a44     a21 a22 a23 a24     a21 a23 a24 a22
+
+    */
+
+    int marg_id = 1;
+    int marg_dim = 1;
+    int total_dim = 4;
+
+    double delta1 = 0.1 * 0.1;
+    double delta2 = 0.2 * 0.2;
+    double delta3 = 0.3 * 0.3;
+    double delta4 = 0.4 * 0.4;
+
+    int cols = 4;
+    // 构建3x3的信息矩阵
+    MatXX H_marg(MatXX::Zero(cols, cols));
+    // clang-format off
+    H_marg << 1. / delta1, -1. / delta1, 0,  1 / delta1,
+             -1. / delta1, 1. / delta1 + 1. / delta2 + 1. / delta3, -1. / delta3, -1 / delta4,
+              0.,-1. / delta3, 1 / delta3, -1 / delta4,
+             -1. / delta2 , 1. / delta3 , 1.0 / delta4, -1.0 / delta4;
+    // clang-format on
+
+    std::cout << "---------- TEST Marg: before marg------------" << std::endl;
+    std::cout << H_marg << std::endl;
+    // 将要边缘的这行
+    Eigen::MatrixXd tmp_marg_row = H_marg.block(marg_id, 0, marg_dim, total_dim);
+    // 剩下的行 当矩阵为4x4的时候
+    Eigen::MatrixXd tmp_botRows = H_marg.block(marg_id + marg_dim, 0, total_dim - marg_dim - marg_id, total_dim);
+
+    H_marg.block(marg_id, 0, total_dim - marg_id - marg_dim, total_dim) = tmp_botRows;
+    H_marg.block(total_dim - marg_dim, 0, marg_dim, total_dim) = tmp_marg_row;
+    std::cout << "中间态:" << std::endl;
+
+    std::cout << H_marg << std::endl;
+
+    // 在移动列
+    Eigen::MatrixXd tmp_cols = H_marg.block(0, marg_id, total_dim, marg_dim);
+    Eigen::MatrixXd tmp_rightCols = H_marg.block(0, marg_id + marg_dim, total_dim, total_dim - marg_id - marg_dim);
+
+    H_marg.block(0, marg_id, total_dim, total_dim - marg_dim - marg_id) = tmp_rightCols;
+    H_marg.block(0, total_dim - marg_dim, total_dim, marg_dim) = tmp_cols;
+
+    std::cout << "---------- TEST Marg: 将变量移动到右下角------------" << std::endl;
+    std::cout << H_marg << std::endl;
+
+    // 开始舒尔补
+    double eps = 1e-8;
+    int m2 = marg_dim;
+    int n2 = total_dim - marg_dim;  // 剩余变量的维度
+
+    Eigen::MatrixXd Arr = H_marg.block(0, 0, n2, n2);
+    Eigen::MatrixXd Arm = H_marg.block(0, n2, n2, m2);
+    Eigen::MatrixXd Amr = H_marg.block(n2, 0, m2, n2);
+
+    Eigen::MatrixXd Amm = 0.5 * (H_marg.block(n2, n2, m2, m2) + H_marg.block(n2, n2, m2, m2).transpose());
+    // 求逆的操作
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> saes(Amm);
+    Eigen::MatrixXd Amm_inv =
+        saes.eigenvectors() *
+        Eigen::VectorXd((saes.eigenvalues().array() > eps).select(saes.eigenvalues().array().inverse(), 0))
+            .asDiagonal() *
+        saes.eigenvectors().transpose();
+
+    Eigen::MatrixXd tempB = Arm * Amm_inv;
+    Eigen::MatrixXd H_prior_ = Arr - tempB * Amr;
+    std::cout << "---------- TEST Marg: after marg------------" << std::endl;
+    std::cout << H_prior_ << std::endl;
 }
 
 }  // namespace vslam::backend

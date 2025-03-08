@@ -68,6 +68,10 @@ int main(int argc, char** argv) {
         camera_params << cameraPoses[i].twc, cameraPoses[i].Qwc.x(), cameraPoses[i].Qwc.y(), cameraPoses[i].Qwc.z(),
             cameraPoses[i].Qwc.w();
         camera_pose->SetParameters(camera_params);
+        if (i != 2) {
+            // 对第一帧和第二帧的位姿进行fixed. 可以看到零空间的解没有变换
+            camera_pose->SetFixed(true);
+        }
         problem.AddVertex(camera_pose);
         pose_vertices_.push_back(camera_pose);
     }
@@ -126,5 +130,7 @@ int main(int argc, char** argv) {
     /// 优化完成后，第一帧相机的 pose 平移（x,y,z）不再是原点 0,0,0. 说明向零空间发生了漂移。
     // translation after opt: 0 :-0.000478001   0.00115906  0.000366506 || gt: 0 0 0 这漂移很小啊
     /// 解决办法： fix 第一帧和第二帧，固定 7 自由度。 或者加上非常大的先验值。
+
+    problem.TestMarginalize();
     return 0;
 }
