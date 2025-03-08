@@ -1,6 +1,7 @@
 #include <iostream>
 #include <random>
 #include "edge_reprojection.hh"
+#include "problem.hh"
 #include "problem_schur.hh"
 #include "vertex_inverse_depth.hh"
 #include "vertex_pose.hh"
@@ -123,7 +124,7 @@ int main(int argc, char** argv) {
                   << " || gt: " << cameraPoses[i].twc.transpose() << std::endl;
     }
     /// 优化完成后，第一帧相机的 pose 平移（x,y,z）不再是原点 0,0,0. 说明向零空间发生了漂移。
+    // translation after opt: 0 :-0.000478001   0.00115906  0.000366506 || gt: 0 0 0 这漂移很小啊
     /// 解决办法： fix 第一帧和第二帧，固定 7 自由度。 或者加上非常大的先验值。
-
     return 0;
 }

@@ -2,12 +2,13 @@
  * @Author: lihang 1019825699@qq.com
  * @Date: 2025-03-06 23:55:49
  * @LastEditors: lihang 1019825699@qq.com
- * @LastEditTime: 2025-03-07 00:59:14
+ * @LastEditTime: 2025-03-08 09:53:11
  * @FilePath: /vio_learn/src/vio_slam/src/backend/edge_reprojection.cc
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置:
  * https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 #include "edge_reprojection.hh"
+#include <iostream>
 #include "se3.hpp"
 #include "vertex_inverse_depth.hh"
 #include "vertex_point_xyz.hh"
@@ -35,7 +36,7 @@ void EdgeReprojection::ComputeResidual() {
     Eigen::Vector3d pt_in_imu_j = Qwj.inverse() * (pt_in_world - twj);
     Eigen::Vector3d pt_in_camera_j = qic_.inverse() * (pt_in_imu_j - tic_);
 
-    double depth_j = pt_in_camera_j[2];
+    double depth_j = pt_in_camera_j.z();
     // 归一化相机
     residual_ = (pt_in_camera_j / depth_j).head<2>() - pts_j_.head<2>();
 }

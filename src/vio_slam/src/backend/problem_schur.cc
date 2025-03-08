@@ -2,7 +2,7 @@
  * @Author: lihang 1019825699@qq.com
  * @Date: 2025-03-04 23:12:57
  * @LastEditors: lihang 1019825699@qq.com
- * @LastEditTime: 2025-03-08 01:30:12
+ * @LastEditTime: 2025-03-08 10:10:06
  * @FilePath: /vio_learn/src/vio_slam/src/backend/problem.cc
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置:
  * https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
@@ -116,8 +116,9 @@ void ProblemSchur::SetOrdering() {
 void ProblemSchur::AddOrderingSLAM(const std::shared_ptr<Vertex>& vertex) {
     if (IsPoseVertex(vertex)) {
         vertex->SetOrderingId(ordering_pose_);
-        ordering_pose_ += vertex->LocalDimension();
         idx_pose_vertices_.insert(std::pair(vertex->Id(), vertex));
+        ordering_pose_ += vertex->LocalDimension();
+
     } else if (IsLandmarkVertex(vertex)) {
         vertex->SetOrderingId(ordering_landmark_);
         ordering_landmark_ += vertex->LocalDimension();
@@ -252,12 +253,20 @@ void ProblemSchur::RemoveLambdaHessianLM() {
 }
 
 void ProblemSchur::UpdateStates() {
-    for (auto& v : verticies_) {
-        ulong idx = v.first;
-        ulong v_dim = v.second->LocalDimension();
-        VecX delta = delta_x.segment(idx, v_dim);
-        v.second->Plus(delta);
+    for (auto vertex : verticies_) {
+        ulong idx = vertex.second->OrderingId();
+        ulong dim = vertex.second->LocalDimension();
+        VecX delta = delta_x.segment(idx, dim);
+        vertex.second->Plus(delta);
     }
+    if (err_prior_.rows() > 0) {
+        b_prior_ -= H_prior_ * delta_x.head(ordering_pose_);  // update the error_prior
+        // err_prior_ = Jt_prior_inv_ * b_prior_.head(ordering_pose_ - 6);
+    }
+    // if (err_prior_.rows() > 0) {
+    //     b_prior_ -= H_prior_ * delta_x_.head(ordering_poses_);  // update the error_prior
+    //     err_prior_ = Jt_prior_inv_ * b_prior_.head(ordering_poses_ - 6);
+    // }
 }
 
 bool ProblemSchur::IsGoodStepInLM() {
@@ -266,15 +275,16 @@ bool ProblemSchur::IsGoodStepInLM() {
     scale += 1e-3;  // make sure it's non-zero :)
 
     // recompute residuals after update state
-    // 统计所有的残差
+    // TODO:: get robustChi2() instead of Chi2()
     double tempChi = 0.0;
     for (auto edge : edges_) {
         edge.second->ComputeResidual();
         tempChi += edge.second->Chi2();
     }
+    if (err_prior_.size() > 0) tempChi += err_prior_.norm();
 
     double rho = (currentChi_ - tempChi) / scale;
-    if (rho > 0 && std::isfinite(tempChi))  // last step was good, 误差在下降
+    if (rho > 0 && isfinite(tempChi))  // last step was good, 误差在下降
     {
         double alpha = 1. - pow((2 * rho - 1), 3);
         alpha = std::min(alpha, 2. / 3.);
@@ -282,16 +292,10 @@ bool ProblemSchur::IsGoodStepInLM() {
         currentLambda_ *= scaleFactor;
         ni_ = 2;
         currentChi_ = tempChi;
-        n_iter_++;
-        outfile_ << n_iter_ << " " << currentLambda_ << std::endl;
-        std::cout << n_iter_ << " " << currentLambda_ << std::endl;
         return true;
     } else {
         currentLambda_ *= ni_;
         ni_ *= 2;
-        n_iter_++;
-        outfile_ << n_iter_ << " " << currentLambda_ << std::endl;
-        std::cout << n_iter_ << " " << currentLambda_ << "  false" << std::endl;
         return false;
     }
 }
@@ -331,7 +335,6 @@ void ProblemSchur::SolveLinearSystem() {
         */
         int reserve_size = ordering_pose_;
         int marg_size = ordering_landmark_;
-        std::cout << "reserve_size:" << reserve_size << ",mar_size:" << marg_size << std::endl;
         MatXX Hmm = Hessian_.block(reserve_size, reserve_size, marg_size, marg_size);
         MatXX Hpm = Hessian_.block(0, reserve_size, reserve_size, marg_size);
         MatXX Hmp = Hessian_.block(reserve_size, 0, marg_size, reserve_size);
@@ -344,7 +347,7 @@ void ProblemSchur::SolveLinearSystem() {
         // Hmm
         // 是对角线矩阵，它的求逆可以直接为对角线块分别求逆，如果是逆深度，对角线块为1维的，则直接为对角线的倒数，这里可以加速
         for (const auto& idx_landmark_vertex : idx_landmark_vertices_) {
-            int idx = idx_landmark_vertex.second->OrderingId() - ordering_pose_;
+            int idx = idx_landmark_vertex.second->OrderingId() - reserve_size;
             int size = idx_landmark_vertex.second->LocalDimension();
             Hmm_inv.block(idx, idx, size, size) = Hmm.block(idx, idx, size, size).inverse();
         }
@@ -429,10 +432,6 @@ bool ProblemSchur::Solve(int iterations) {
     bool stop = false;
     int iter = 0;
 
-    n_iter_++;
-    outfile_ << n_iter_ << " " << currentLambda_ << std::endl;
-    std::cout << n_iter_ << " " << currentLambda_ << std::endl;
-
     while (!stop && (iter < iterations)) {
         std::cout << "iter: " << iter << " , chi= " << currentChi_ << " , Lambda= " << currentLambda_ << std::endl;
 
@@ -444,7 +443,8 @@ bool ProblemSchur::Solve(int iterations) {
             SolveLinearSystem();
             //  delta_x_ = H.ldlt().solve(b_);
             // 如果增量很小,或者一直失败
-            if (delta_x.norm() <= 1e-6 || false_cnt > 10) {
+            if (delta_x.squaredNorm() <= 1e-6 || false_cnt > 10) {
+                std::cout << "delta_x norm:" << delta_x.squaredNorm() << std::endl;
                 stop = true;
                 break;
             }
@@ -464,8 +464,10 @@ bool ProblemSchur::Solve(int iterations) {
         }
         iter++;
         if (sqrt(currentChi_) <= stopThresholdLM_) {
+            std::cout << "currentChi  <= stopThresholdLM_ " << std::endl;
             stop = true;
         }
+        std::cout << "stop:" << stop << ", false count:" << false_cnt << std::endl;
     }
     outfile_.close();
     auto t_solve = std::chrono::system_clock::now();
