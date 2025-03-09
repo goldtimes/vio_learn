@@ -1,10 +1,13 @@
 find_package(Eigen3 REQUIRED)
 find_package(Sophus REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
 
 include_directories(
     ${EIGEN3_INCLUDE_DIR}
     src/backend
     src/thirdparty/sophus
+    ${Boost_INCLUDE_DIRS}
 )
 
 message(${PROJECT_SOURCE_DIR})
@@ -30,3 +33,11 @@ target_link_libraries(monoBA ${PROJECT_NAME}_backend)
 
 add_executable(triangulation src/triangulation/triangulation.cc)
 target_link_libraries(triangulation ${PROJECT_NAME}_backend)
+
+add_executable(run_eruco src/vins_code/app/run_eruco.cc)
+target_link_libraries(run_eruco 
+    ${PROJECT_NAME}_backend
+    ${Boost_LIBRARIES} 
+    ${OpenCV_LIBS}
+    -lpthread
+    )
