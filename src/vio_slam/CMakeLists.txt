@@ -10,6 +10,7 @@ include_directories(
     src/backend
     src/thirdparty/sophus
     src/vins_code
+    src/vins_code/include
     ${Boost_INCLUDE_DIRS}
     ${GTEST_INCLUDE_DIRS}
 )
@@ -38,16 +39,39 @@ target_link_libraries(monoBA ${PROJECT_NAME}_backend)
 add_executable(triangulation src/triangulation/triangulation.cc)
 target_link_libraries(triangulation ${PROJECT_NAME}_backend)
 
-add_executable(run_eurco 
-    src/vins_code/app/run_eurco.cc
+
+add_library(camera_model SHARED
+    src/vins_code/camera_models/chessboard/Chessboard.cc
+    src/vins_code/camera_models/calib/CameraCalibration.cc
+    src/vins_code/camera_models/camera_models/Camera.cc
+    src/vins_code/camera_models/camera_models/CameraFactory.cc
+    src/vins_code/camera_models/camera_models/CostFunctionFactory.cc
+    src/vins_code/camera_models/camera_models/PinholeCamera.cc
+    src/vins_code/camera_models/camera_models/CataCamera.cc
+    src/vins_code/camera_models/camera_models/EquidistantCamera.cc
+    src/vins_code/camera_models/camera_models/ScaramuzzaCamera.cc
+    src/vins_code/camera_models/sparse_graph/Transform.cc
+    src/vins_code/camera_models/gpl/gpl.cc
+    src/vins_code/camera_models/gpl/EigenQuaternionParameterization.cc)
+
+target_link_libraries(camera_model ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
+
+
+add_library(vins_system_lib
     src/vins_code/system.cc
     src/vins_code/system_config.cc
-
 )
-target_link_libraries(run_eurco 
-    ${PROJECT_NAME}_backend
+
+target_link_libraries(vins_system_lib
+    camera_model
     ${Boost_LIBRARIES} 
     ${OpenCV_LIBS}
     -lpthread
+)
+
+add_executable(run_eurco  src/vins_code/app/run_eurco.cc
+)
+target_link_libraries(run_eurco 
+    vins_system_lib
 )
 
