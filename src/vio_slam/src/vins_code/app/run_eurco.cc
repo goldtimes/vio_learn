@@ -16,11 +16,14 @@
 #include <opencv2/opencv.hpp>
 #include <string>
 #include <thread>
+#include "system.hh"
 
 std::string euro_data_dir;
 std::string config_dir;
 
 const int nDelayTimes = 2;
+
+std::shared_ptr<vslam::vins::System> system_;
 
 void PubImageThread() {
     auto cam_config_file = boost::filesystem::path(config_dir) / "MH_05_cam0.txt";
@@ -44,6 +47,7 @@ void PubImageThread() {
                 return;
             }
             // add to system
+            system_->AddImage(cam_timestamped, image);
             usleep(5000 * nDelayTimes);
         }
         cam_fin.close();
@@ -67,21 +71,18 @@ void PubImuThread() {
         std::istringstream ss_imu(imu_line);
         ss_imu >> imu_stamped >> gyro.x() >> gyro.y() >> gyro.z() >> acc.x() >> acc.y() >> acc.z();
         // add imu data to system
+        system_->AddImu(imu_stamped, acc, gyro);
         usleep(5000 * nDelayTimes);
     }
     imu_fin.close();
 }
 
 int main(int argc, char** argv) {
-    // if (argc != 3) {
-    //     std::cerr << "./run_euroc PATH_TO_FOLDER/MH-05/mav0 PATH_TO_CONFIG/config \n"
-    //               << "For example: ./run_euroc /home/stevencui/dataset/EuRoC/MH-05/mav0/ ../config/" << std::endl;
-    //     return -1;
-    // }
-
     std::cout << "Run Eurco Data.........." << std::endl;
     euro_data_dir = "/home/hang/vslam_ws/src/vio_learn/MH_05_difficult/mav0";
     config_dir = "/home/hang/vslam_ws/src/vio_learn/config";
+
+    system_ = std::make_shared<vslam::vins::System>(config_dir);
 
     // 创建线程并运行起来了
     std::thread pub_image_thread(PubImageThread);

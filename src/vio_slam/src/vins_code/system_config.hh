@@ -7,6 +7,8 @@
 
 namespace vslam::vins {
 struct SystemConfg {
+    SystemConfg() {
+    }
     const int NUM_OF_CAM = 1;
     std::string imu_topic;
     std::string image_topic;
