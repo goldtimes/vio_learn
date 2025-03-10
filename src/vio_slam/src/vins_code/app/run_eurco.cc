@@ -8,7 +8,6 @@
  * https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 
-#include <stdio.h>
 #include <Eigen/Core>
 #include <Eigen/Eigen>
 #include <boost/filesystem.hpp>
@@ -39,15 +38,16 @@ void PubImageThread() {
         while (std::getline(cam_fin, cam_line) && !cam_line.empty()) {
             std::istringstream ss_cam(cam_line);
             ss_cam >> cam_timestamped >> image_name;
-            std::cout << "image_name:" << image_name << std::endl;
+            // std::cout << std::fixed << "image_name:" << image_name << ",image time: " << cam_timestamped <<
+            // std::endl;
             auto image_path = euro_data_dir + "/cam0/data/" + image_name;
-            cv::Mat image = cv::imread(image_path);
+            cv::Mat image = cv::imread(image_path, 0);
             if (image.empty()) {
                 std::cerr << "image is empty! path: " << image_path << std::endl;
                 return;
             }
             // add to system
-            system_->AddImage(cam_timestamped, image);
+            system_->AddImage(cam_timestamped / 1e9, image);
             usleep(5000 * nDelayTimes);
         }
         cam_fin.close();
@@ -79,8 +79,8 @@ void PubImuThread() {
 
 int main(int argc, char** argv) {
     std::cout << "Run Eurco Data.........." << std::endl;
-    euro_data_dir = "/home/hang/vslam_ws/src/vio_learn/MH_05_difficult/mav0";
-    config_dir = "/home/hang/vslam_ws/src/vio_learn/config";
+    euro_data_dir = "/home/kilox/vslam_ws/src/vio_learn/MH_05_difficult/mav0";
+    config_dir = "/home/kilox/vslam_ws/src/vio_learn/config";
 
     system_ = std::make_shared<vslam::vins::System>(config_dir);
 

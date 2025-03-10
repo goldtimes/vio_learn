@@ -7,6 +7,7 @@
 #include <mutex>
 #include <opencv2/opencv.hpp>
 #include <queue>
+#include "feature_track.hh"
 #include "system_config.hh"
 #include "tic_toc.hh"
 
@@ -76,5 +77,7 @@ class System {
     int pub_count = 0;
     bool PUB_THIS_FRAME = false;
     TicToc track_record;
+
+    std::shared_ptr<FeatureTrack> feature_track;
 };
 }  // namespace vslam::vins

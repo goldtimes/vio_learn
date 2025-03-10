@@ -2,8 +2,7 @@ find_package(Eigen3 REQUIRED)
 find_package(Sophus REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Boost REQUIRED COMPONENTS filesystem program_options system)
-
-find_package(GTest REQUIRED)
+find_package(Ceres REQUIRED)
 
 include_directories(
     ${EIGEN3_INCLUDE_DIR}
@@ -12,7 +11,7 @@ include_directories(
     src/vins_code
     src/vins_code/include
     ${Boost_INCLUDE_DIRS}
-    ${GTEST_INCLUDE_DIRS}
+    ${CERES_INCLUDE_DIRS}
 )
 
 message(${PROJECT_SOURCE_DIR})
@@ -60,6 +59,7 @@ target_link_libraries(camera_model ${Boost_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIB
 add_library(vins_system_lib
     src/vins_code/system.cc
     src/vins_code/system_config.cc
+    src/vins_code/feature_track.cc
 )
 
 target_link_libraries(vins_system_lib
@@ -69,9 +69,10 @@ target_link_libraries(vins_system_lib
     -lpthread
 )
 
-add_executable(run_eurco  src/vins_code/app/run_eurco.cc
+add_executable( run_eurco  
+    src/vins_code/app/run_eurco.cc
 )
-target_link_libraries(run_eurco 
+target_link_libraries( run_eurco 
     vins_system_lib
 )
 
