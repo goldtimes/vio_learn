@@ -126,8 +126,8 @@ void readParameters(std::string config_file, SystemConfg& config) {
          << "\n  NUM_ITERATIONS:" << config.NUM_ITERATIONS << "\n  ESTIMATE_EXTRINSIC:" << config.ESTIMATE_EXTRINSIC
          << "\n  ESTIMATE_TD:" << config.ESTIMATE_TD << "\n  ROLLING_SHUTTER:" << config.ROLLING_SHUTTER
          << "\n  ROW:" << config.ROW << "\n  COL:" << config.COL << "\n  TD:" << config.TD << "\n  TR:" << config.TR
-         << "\n  FOCAL_LENGTH:" << config.focal_length << "\n  IMAGE_TOPIC:" << config.imu_topic
-         << "\n  IMU_TOPIC:" << config.IMU_TOPIC << "\n  FISHEYE_MASK:" << config.FISHEYE_MASK
+         << "\n  FOCAL_LENGTH:" << config.focal_length << "\n  IMAGE_TOPIC:" << config.image_topic
+         << "\n  IMU_TOPIC:" << config.imu_topic << "\n  FISHEYE_MASK:" << config.FISHEYE_MASK
          << "\n  CAM_NAMES[0]:" << config.CAM_NAMES[0] << "\n  MAX_CNT:" << config.MAX_CNT
          << "\n  MIN_DIST:" << config.MIN_DIST << "\n  FREQ:" << config.FREQ << "\n  F_THRESHOLD:" << config.F_THRESHOLD
          << "\n  SHOW_TRACK:" << config.SHOW_TRACK << "\n  STEREO_TRACK:" << config.STEREO_TRACK

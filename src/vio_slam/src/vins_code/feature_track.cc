@@ -21,16 +21,16 @@ void FeatureTrack::ReadIntrinsicParameter(const std::string &config_file) {
     camera_ptr = camodocal::CameraFactory::instance()->generateCameraFromYamlFile(config_file);
 }
 
-template <typename T>
-void FeatureTrack::reduceVector(T datas, std::vector<uchar> status) {
-    int valid_index = 0;
-    for (int i = 0; i < datas.size(); ++i) {
-        if (status[i]) {
-            datas[valid_index++] = datas[i];
-        }
-    }
-    datas.resize(valid_index);
-}
+// template <typename T>
+// void FeatureTrack::reduceVector(T &&datas, std::vector<uchar> status) {
+//     int valid_index = 0;
+//     for (int i = 0; i < datas.size(); ++i) {
+//         if (status[i]) {
+//             datas[valid_index++] = datas[i];
+//         }
+//     }
+//     datas.resize(valid_index);
+// }
 
 // 对已经提取的关键点进行了mask
 void FeatureTrack::setMask() {
@@ -123,7 +123,7 @@ void FeatureTrack::trackImage(const cv::Mat &image, double img_time, bool track_
         // 光流追踪, 这里就会丢掉或者保留长期追踪下来的点。这里是每帧都在处理
         std::vector<uchar> status;
         std::vector<float> errors;
-        cv::calcOpticalFlowPyrLK(cur_img, forw_img, cur_kps, forw_kps, status, errors);
+        cv::calcOpticalFlowPyrLK(cur_img, forw_img, cur_kps, forw_kps, status, errors, cv::Size(21, 21), 3);
         // 根据状态过滤掉outliner
         for (int i = 0; i < forw_kps.size(); ++i) {
             // 如果在image size外面了，需要排除改点
@@ -145,21 +145,25 @@ void FeatureTrack::trackImage(const cv::Mat &image, double img_time, bool track_
             count++;
         }
     }
+    std::cout << "forw_kps:" << forw_kps.size() << std::endl;
+
     // 才开始追踪特征
     if (track_this_frame) {
         rejectWithF();
         setMask();
         // 总的特征点 - 上一帧光流追踪到的特征点个数 = 将要提取的特征点数
+        std::cout << "forw_kps:" << forw_kps.size() << std::endl;
         int frame_max_features = config_.MAX_CNT - static_cast<int>(forw_kps.size());
-        if (track_this_frame > 0) {
+        if (frame_max_features > 0) {
             if (mask.size() != forw_img.size()) {
                 std::cerr << "wrong size" << std::endl;
             }
-            cv::goodFeaturesToTrack(forw_img, kpts, frame_max_features, 0.01, config_.MIN_DIST, mask);
+            cv::goodFeaturesToTrack(forw_img, kpts, config_.MAX_CNT - forw_kps.size(), 0.01, config_.MIN_DIST, mask);
         } else {
             kpts.clear();
         }
         addPoints();
+        std::cout << "forw_kps:" << forw_kps.size() << std::endl;
     }
     // 状态
     prev_img = cur_img;
@@ -174,6 +178,7 @@ void FeatureTrack::trackImage(const cv::Mat &image, double img_time, bool track_
 void FeatureTrack::undistoredPoints() {
     cur_un_kps.clear();
     cur_un_kps_map.clear();
+    std::cout << "cur_kps size:" << cur_kps.size() << std::endl;
     for (unsigned int i = 0; i < cur_kps.size(); ++i) {
         Eigen::Vector2d cur_pt(cur_kps[i].x, cur_kps[i].y);
         Eigen::Vector3d b;

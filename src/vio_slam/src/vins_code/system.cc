@@ -6,11 +6,12 @@ namespace vslam::vins {
 
 System::System(const std::string config_dir) {
     std::cout << "vins system staring............." << std::endl;
-    std::string config_file = config_dir + "/euroc_config.yaml";
+    std::string config_file = config_dir + "/sim_config.yaml";
     readParameters(config_file, config_);
 
     // tracker
     feature_track = std::make_shared<FeatureTrack>(config_);
+    feature_track->ReadIntrinsicParameter(config_file);
     // estimator
 
     // record pose
@@ -88,7 +89,7 @@ void System::AddImage(double sensor_time, const cv::Mat& image) {
                 double y = undistored_pts[i].y;
                 double z = 1.;
                 feature_points->points.push_back(Eigen::Vector3d(x, y, z));
-                feature_points->id_of_points.push_back(p_id * config_.NUM_OF_CAM + i);
+                feature_points->id_of_points.push_back(p_id + i);
                 feature_points->u_of_points.push_back(cur_pts[i].x);
                 feature_points->v_of_points.push_back(cur_pts[i].y);
                 feature_points->velocity_x_of_point.push_back(pts_velocity[i].x);

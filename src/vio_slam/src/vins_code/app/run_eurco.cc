@@ -2,7 +2,7 @@
  * @Author: lihang 1019825699@qq.com
  * @Date: 2025-03-09 22:39:37
  * @LastEditors: lihang 1019825699@qq.com
- * @LastEditTime: 2025-03-09 23:59:13
+ * @LastEditTime: 2025-03-10 23:54:46
  * @FilePath: /vio_learn/src/vio_slam/src/vins_code/app/run_eurco.cc
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置:
  * https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
@@ -79,8 +79,8 @@ void PubImuThread() {
 
 int main(int argc, char** argv) {
     std::cout << "Run Eurco Data.........." << std::endl;
-    euro_data_dir = "/home/kilox/vslam_ws/src/vio_learn/MH_05_difficult/mav0";
-    config_dir = "/home/kilox/vslam_ws/src/vio_learn/config";
+    euro_data_dir = "/home/hang/vslam_ws/src/vio_learn/MH_05_difficult/mav0";
+    config_dir = "/home/hang/vslam_ws/src/vio_learn/config";
 
     system_ = std::make_shared<vslam::vins::System>(config_dir);
 

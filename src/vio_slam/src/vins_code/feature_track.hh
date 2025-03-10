@@ -1,3 +1,12 @@
+/*
+ * @Author: lihang 1019825699@qq.com
+ * @Date: 2025-03-10 23:48:12
+ * @LastEditors: lihang 1019825699@qq.com
+ * @LastEditTime: 2025-03-11 00:33:47
+ * @FilePath: /vio_learn/src/vio_slam/src/vins_code/feature_track.hh
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置:
+ * https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
 #pragma once
 #include <Eigen/Eigen>
 #include <iostream>
@@ -29,9 +38,19 @@ class FeatureTrack {
     void rejectWithF();
     // 处理新的特征点
     void addPoints();
-    template <typename T>
-    void reduceVector(T datas, std::vector<uchar> status);
+    void reduceVector(std::vector<cv::Point2f>& v, std::vector<uchar> status) {
+        int j = 0;
+        for (int i = 0; i < int(v.size()); i++)
+            if (status[i]) v[j++] = v[i];
+        v.resize(j);
+    }
 
+    void reduceVector(std::vector<int>& v, std::vector<uchar> status) {
+        int j = 0;
+        for (int i = 0; i < int(v.size()); i++)
+            if (status[i]) v[j++] = v[i];
+        v.resize(j);
+    }
     bool updateID(unsigned int i) {
         if (i < ids.size()) {
             if (ids[i] == -1) {
@@ -45,7 +64,6 @@ class FeatureTrack {
 
     //    相机模型
     camodocal::CameraPtr camera_ptr;
-
     double cur_time;
     double prev_time;
 
