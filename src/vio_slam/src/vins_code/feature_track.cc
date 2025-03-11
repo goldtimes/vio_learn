@@ -2,6 +2,8 @@
 
 namespace vslam::vins {
 
+int FeatureTrack::n_id = 0;
+
 bool FeatureTrack::inBorder(const cv::Point2f &point) {
     const int BORDER_SIZE = 1;
     int img_x = cvRound(point.x);
@@ -21,24 +23,10 @@ void FeatureTrack::ReadIntrinsicParameter(const std::string &config_file) {
     camera_ptr = camodocal::CameraFactory::instance()->generateCameraFromYamlFile(config_file);
 }
 
-// template <typename T>
-// void FeatureTrack::reduceVector(T &&datas, std::vector<uchar> status) {
-//     int valid_index = 0;
-//     for (int i = 0; i < datas.size(); ++i) {
-//         if (status[i]) {
-//             datas[valid_index++] = datas[i];
-//         }
-//     }
-//     datas.resize(valid_index);
-// }
-
 // 对已经提取的关键点进行了mask
 void FeatureTrack::setMask() {
     // mask是全黑的，后面对已经追踪的关键点绘制成白色
     mask = cv::Mat(config_.ROW, config_.COL, CV_8UC1, cv::Scalar(255));
-    if (forw_img.empty()) {
-        return;
-    }
     // track_cnt, feature_point2f, feature_id
     std::vector<std::pair<int, std::pair<cv::Point2f, int>>> cnt_pts_ids;
     for (unsigned int i = 0; i < forw_kps.size(); ++i) {
@@ -123,6 +111,7 @@ void FeatureTrack::trackImage(const cv::Mat &image, double img_time, bool track_
         // 光流追踪, 这里就会丢掉或者保留长期追踪下来的点。这里是每帧都在处理
         std::vector<uchar> status;
         std::vector<float> errors;
+        std::cout << "calcOpticalFlowPyrLK" << std::endl;
         cv::calcOpticalFlowPyrLK(cur_img, forw_img, cur_kps, forw_kps, status, errors, cv::Size(21, 21), 3);
         // 根据状态过滤掉outliner
         for (int i = 0; i < forw_kps.size(); ++i) {

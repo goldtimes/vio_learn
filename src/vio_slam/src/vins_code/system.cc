@@ -69,7 +69,12 @@ void System::AddImage(double sensor_time, const cv::Mat& image) {
     // track image
     feature_track->trackImage(image, sensor_time, PUB_THIS_FRAME);
     // update feature id;
+    for (unsigned int i = 0;; i++) {
+        bool completed = false;
+        completed |= feature_track->updateID(i);
 
+        if (!completed) break;
+    }
     if (PUB_THIS_FRAME) {
         pub_count++;
         // 将提取到的特征放到image_msg队列中
@@ -79,7 +84,7 @@ void System::AddImage(double sensor_time, const cv::Mat& image) {
         auto& undistored_pts = feature_track->cur_un_kps;
         auto& cur_pts = feature_track->cur_kps;
         auto& ids = feature_track->ids;
-        auto pts_velocity = feature_track->pts_velocity;
+        auto& pts_velocity = feature_track->pts_velocity;
 
         for (int i = 0; i < ids.size(); ++i) {
             if (feature_track->track_cnt[i] > 1) {
