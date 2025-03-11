@@ -98,7 +98,7 @@ void System::AddImage(double sensor_time, const cv::Mat& image) {
         }
 
         data_mtx.lock();
-        image_queu_.push(feature_points);
+        image_queue_.push(feature_points);
         data_mtx.unlock();
         cond.notify_one();
     }
@@ -148,7 +148,6 @@ void System::ProcessBackend() {
         std::vector<std::pair<std::vector<ImuConstPtr>, ImageConstPtr>> measurements;
         // 被唤醒后，检查条件变量是否为true/false. false的情况下会放弃锁资源，继续等待
         // true的条件下，获取锁，往下执行
-
         cond.wait(lk, [&]() {
             measurements = getMeasurements();
             return !measurements.empty();
@@ -158,6 +157,49 @@ void System::ProcessBackend() {
 
 std::vector<std::pair<std::vector<ImuConstPtr>, ImageConstPtr>> System::getMeasurements() {
     std::vector<std::pair<std::vector<ImuConstPtr>, ImageConstPtr>> measurements;
+    while (true) {
+        // 队列为空
+        if (imu_queue_.empty() || image_queue_.empty()) {
+            return measurements;
+        }
+        /**
+                imu_front----------imu_back
+                                            image_front-------image_back
+         */
+        if (imu_queue_.back()->timestamped < image_queue_.front()->timestamped + config_.TD) {
+            std::cerr << "wait for imu, only should happen at the beginning sum_of_wait: " << sum_of_wait << std::endl;
+            sum_of_wait++;
+            return measurements;
+        }
+        /**
+                         imu_front----------imu_back
+            image_front-------image_back
+         */
+        if (imu_queue_.front()->timestamped > image_queue_.front()->timestamped + config_.TD) {
+            std::cerr << "throw img, only should happen at the beginning" << std::endl;
+            image_queue_.pop();
+            continue;
+        }
+        /**
+                imu_front----------imu_back
+                            image_front-------image_back
+         */
+        //  取出图像数据
+        ImageConstPtr img_msg = image_queue_.front();
+        image_queue_.pop();
+        std::vector<ImuConstPtr> imus;
+        while (imu_queue_.front()->timestamped < img_msg->timestamped + config_.TD) {
+            imus.emplace_back(imu_queue_.front());
+            imu_queue_.pop();
+        }
+        imus.emplace_back(imu_queue_.front());
+        if (imus.empty()) {
+            std::cerr << "no imu between two images" << std::endl;
+        }
+        std::cout << "get imus between two images:" << imus.size() << std::endl;
+        measurements.emplace_back(imus, img_msg);
+    }
+
     return measurements;
 }
 }  // namespace vslam::vins

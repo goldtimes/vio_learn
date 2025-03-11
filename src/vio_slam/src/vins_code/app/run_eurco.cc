@@ -48,7 +48,7 @@ void PubImageThread() {
             }
             // add to system
             system_->AddImage(cam_timestamped / 1e9, image);
-            usleep(5000 * nDelayTimes);
+            usleep(50000 * nDelayTimes);
         }
         cam_fin.close();
     }
@@ -71,7 +71,7 @@ void PubImuThread() {
         std::istringstream ss_imu(imu_line);
         ss_imu >> imu_stamped >> gyro.x() >> gyro.y() >> gyro.z() >> acc.x() >> acc.y() >> acc.z();
         // add imu data to system
-        system_->AddImu(imu_stamped, acc, gyro);
+        system_->AddImu(imu_stamped / 1e9, acc, gyro);
         usleep(5000 * nDelayTimes);
     }
     imu_fin.close();
@@ -79,10 +79,13 @@ void PubImuThread() {
 
 int main(int argc, char** argv) {
     std::cout << "Run Eurco Data.........." << std::endl;
-    euro_data_dir = "/home/hang/vslam_ws/src/vio_learn/MH_05_difficult/mav0";
-    config_dir = "/home/hang/vslam_ws/src/vio_learn/config";
+    euro_data_dir = "/home/kilox/vslam_ws/src/vio_learn/MH_05_difficult/mav0";
+    config_dir = "/home/kilox/vslam_ws/src/vio_learn/config";
 
     system_ = std::make_shared<vslam::vins::System>(config_dir);
+
+    // 先运行后台的线程
+    std::thread backend_trhead(&vslam::vins::System::ProcessBackend, system_);
 
     // 创建线程并运行起来了
     std::thread pub_image_thread(PubImageThread);

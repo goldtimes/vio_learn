@@ -145,14 +145,14 @@ void FeatureTrack::trackImage(const cv::Mat &image, double img_time, bool track_
             count++;
         }
     }
-    std::cout << "forw_kps:" << forw_kps.size() << std::endl;
+    // std::cout << "forw_kps:" << forw_kps.size() << std::endl;
 
     // 才开始追踪特征
     if (track_this_frame) {
         rejectWithF();
         setMask();
         // 总的特征点 - 上一帧光流追踪到的特征点个数 = 将要提取的特征点数
-        std::cout << "forw_kps:" << forw_kps.size() << std::endl;
+        // std::cout << "forw_kps:" << forw_kps.size() << std::endl;
         int frame_max_features = config_.MAX_CNT - static_cast<int>(forw_kps.size());
         if (frame_max_features > 0) {
             if (mask.size() != forw_img.size()) {
@@ -163,7 +163,7 @@ void FeatureTrack::trackImage(const cv::Mat &image, double img_time, bool track_
             kpts.clear();
         }
         addPoints();
-        std::cout << "forw_kps:" << forw_kps.size() << std::endl;
+        // std::cout << "forw_kps:" << forw_kps.size() << std::endl;
     }
     // 状态
     prev_img = cur_img;
@@ -178,7 +178,7 @@ void FeatureTrack::trackImage(const cv::Mat &image, double img_time, bool track_
 void FeatureTrack::undistoredPoints() {
     cur_un_kps.clear();
     cur_un_kps_map.clear();
-    std::cout << "cur_kps size:" << cur_kps.size() << std::endl;
+    // std::cout << "cur_kps size:" << cur_kps.size() << std::endl;
     for (unsigned int i = 0; i < cur_kps.size(); ++i) {
         Eigen::Vector2d cur_pt(cur_kps[i].x, cur_kps[i].y);
         Eigen::Vector3d b;

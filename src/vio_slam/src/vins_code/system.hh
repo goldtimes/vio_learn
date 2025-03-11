@@ -64,7 +64,7 @@ class System {
     std::condition_variable cond;
 
     std::queue<ImuConstPtr> imu_queue_;
-    std::queue<ImageConstPtr> image_queu_;
+    std::queue<ImageConstPtr> image_queue_;
 
     double last_imu_time;
 
@@ -77,6 +77,8 @@ class System {
     int pub_count = 0;
     bool PUB_THIS_FRAME = false;
     TicToc track_record;
+
+    int sum_of_wait;
 
     std::shared_ptr<FeatureTrack> feature_track;
 };
