@@ -66,8 +66,8 @@ add_library(vins_system_lib
     src/vins_code/backend/problem.cc
     src/vins_code/backend/vertex_pose.cc
     src/vins_code/backend/edge_reprojection.cc
-    # src/vins_code/backend/edge_imu.cc
-    # src/vins_code/backend/edge_prior.cpp
+    src/vins_code/backend/edge_imu.cc
+    src/vins_code/backend/edge_prior.cc
     # src/vins_code/backend/loss_function.cc
     # src/vins_code/factor/imu_integration.cc
 )
