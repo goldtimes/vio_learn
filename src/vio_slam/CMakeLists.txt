@@ -60,6 +60,16 @@ add_library(vins_system_lib
     src/vins_code/system.cc
     src/vins_code/system_config.cc
     src/vins_code/feature_track.cc
+
+    src/vins_code/backend/vertex.cc
+    src/vins_code/backend/edge.cc
+    src/vins_code/backend/problem.cc
+    src/vins_code/backend/vertex_pose.cc
+    src/vins_code/backend/edge_reprojection.cc
+    # src/vins_code/backend/edge_imu.cc
+    # src/vins_code/backend/edge_prior.cpp
+    # src/vins_code/backend/loss_function.cc
+    # src/vins_code/factor/imu_integration.cc
 )
 
 target_link_libraries(vins_system_lib
